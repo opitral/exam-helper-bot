@@ -1,11 +1,12 @@
 from os import getenv
 from dotenv import load_dotenv
+import certifi
 from pymongo import MongoClient
 from telebot import TeleBot, types
 
 load_dotenv()
 bot = TeleBot(getenv("TELEGRAM_BOT_TOKEN"))
-client = MongoClient(getenv("DB_CLUSTER"))
+client = MongoClient(getenv("DB_STRING"), tlsCAFile=certifi.where())
 db = client[getenv("DB_NAME")]
 topics = db["topics"]
 tickets = db["tickets"]
@@ -38,9 +39,11 @@ def text_message(message):
             if topic:
                 tickets_kb = types.InlineKeyboardMarkup()
                 for ticket in list(tickets.find({"topic_number": topic["number"]})):
-                    tickets_kb.add(types.InlineKeyboardButton(f"#{ticket['number']} {ticket['question']}", callback_data=f"ticket-{ticket['number']}"))
+                    tickets_kb.add(types.InlineKeyboardButton(f"#{ticket['number']} {ticket['question']}",
+                                                              callback_data=f"ticket-{ticket['number']}"))
 
-                bot.send_message(message.chat.id, f"Тема: *{topic['name']}*", parse_mode="Markdown", reply_markup=tickets_kb)
+                bot.send_message(message.chat.id, f"Тема: *{topic['name']}*", parse_mode="Markdown",
+                                 reply_markup=tickets_kb)
 
             else:
                 bot.send_message(message.chat.id, "Тему не знайдено", parse_mode="Markdown")
@@ -57,7 +60,12 @@ def ticket_message(call):
             ticket_number = int(call.data.split("-")[1])
             ticket = tickets.find_one({"number": ticket_number})
             topic = topics.find_one({"number": ticket["topic_number"]})
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}", reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Надіслати помічнику", callback_data=f"help-{ticket['number']}")), parse_mode="Markdown")
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                  text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}",
+                                  reply_markup=types.InlineKeyboardMarkup().add(
+                                      types.InlineKeyboardButton("Надіслати помічнику",
+                                                                 callback_data=f"help-{ticket['number']}")),
+                                  parse_mode="Markdown")
 
     except Exception as ex:
         print(ex)
@@ -71,7 +79,9 @@ def help_message(call):
             ticket_number = int(call.data.split("-")[1])
             ticket = tickets.find_one({"number": ticket_number})
             topic = topics.find_one({"number": ticket["topic_number"]})
-            bot.send_message(getenv("TELEGRAM_HELPER_ID"), f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}", parse_mode="Markdown")
+            bot.send_message(getenv("TELEGRAM_HELPER_ID"),
+                             f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}",
+                             parse_mode="Markdown")
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}",
@@ -84,5 +94,5 @@ def help_message(call):
 
 
 if __name__ == "__main__":
-    bot.send_message(getenv("TELEGRAM_ADMIN_ID"),"Бот запущений")
+    bot.send_message(getenv("TELEGRAM_ADMIN_ID"), "Бот запущений")
     bot.infinity_polling()
