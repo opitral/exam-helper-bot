@@ -40,5 +40,14 @@ def text_message(message):
             bot.send_message(message.chat.id, "Тему не знайдено", parse_mode="Markdown")
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("ticket"))
+def ticket_message(call):
+    if str(call.message.chat.id) == getenv("TELEGRAM_USER_ID"):
+        ticket_number = int(call.data.split("-")[1])
+        ticket = tickets.find_one({"number": ticket_number})
+        topic = topics.find_one({"number": ticket["topic_number"]})
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}", reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("Надіслати помічнику", callback_data=f"help-{ticket['number']}")), parse_mode="Markdown")
+
+
 if __name__ == "__main__":
     bot.infinity_polling()
