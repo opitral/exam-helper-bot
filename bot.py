@@ -84,4 +84,5 @@ def help_message(call):
 
 
 if __name__ == "__main__":
+    bot.send_message(getenv("TELEGRAM_ADMIN_ID"),"Бот запущений")
     bot.infinity_polling()
