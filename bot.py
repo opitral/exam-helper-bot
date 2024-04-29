@@ -61,11 +61,11 @@ def ticket_message(call):
             ticket = tickets.find_one({"number": ticket_number})
             topic = topics.find_one({"number": ticket["topic_number"]})
             bot.send_message(getenv("TELEGRAM_HELPER_ID"),
-                             f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*",
+                             f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}",
                              parse_mode="Markdown")
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
-                                  text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*",
+                                  text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*\n\n{ticket['answer']}",
                                   parse_mode="Markdown")
             bot.answer_callback_query(callback_query_id=call.id, text="Білет надіслано")
 
