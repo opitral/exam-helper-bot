@@ -63,6 +63,10 @@ def ticket_message(call):
             bot.send_message(getenv("TELEGRAM_HELPER_ID"),
                              f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*",
                              parse_mode="Markdown")
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  text=f"Тема: *{topic['name']}*\nНомер білету: *{ticket['number']}*\nПитання: *{ticket['question']}*",
+                                  parse_mode="Markdown")
             bot.answer_callback_query(callback_query_id=call.id, text="Білет надіслано")
 
     except Exception as ex:
